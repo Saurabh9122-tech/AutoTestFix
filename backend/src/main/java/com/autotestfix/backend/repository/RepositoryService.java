@@ -12,10 +12,28 @@ public class RepositoryService {
 
     public RepositoryAnalysis analyzeRepository(String repositoryPath) {
 
-        Path root = Path.of(repositoryPath).toAbsolutePath().normalize();
+        if (repositoryPath == null || repositoryPath.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Repository path is required."
+            );
+        }
+
+        Path root;
+
+        try {
+            root = Path.of(repositoryPath)
+                    .toAbsolutePath()
+                    .normalize();
+        } catch (Exception exception) {
+            throw new IllegalArgumentException(
+                    "Invalid repository path."
+            );
+        }
 
         if (!Files.exists(root) || !Files.isDirectory(root)) {
-            throw new IllegalArgumentException("Invalid repository directory.");
+            throw new IllegalArgumentException(
+                    "Invalid repository directory."
+            );
         }
 
         List<String> buildFiles = new ArrayList<>();
@@ -25,44 +43,65 @@ public class RepositoryService {
         String projectType = "Unknown";
         String buildTool = "Unknown";
 
+        // Detect Java and Maven projects
         if (Files.exists(root.resolve("pom.xml"))) {
+
             projectType = "Java";
             buildTool = "Maven";
+
             buildFiles.add("pom.xml");
-        } else if (Files.exists(root.resolve("build.gradle"))
+        }
+
+        // Detect Gradle projects
+        else if (Files.exists(root.resolve("build.gradle"))
                 || Files.exists(root.resolve("build.gradle.kts"))) {
+
             projectType = "Java";
             buildTool = "Gradle";
 
             if (Files.exists(root.resolve("build.gradle"))) {
                 buildFiles.add("build.gradle");
             }
+
             if (Files.exists(root.resolve("build.gradle.kts"))) {
                 buildFiles.add("build.gradle.kts");
             }
-        } else if (Files.exists(root.resolve("package.json"))) {
+        }
+
+        // Detect JavaScript and TypeScript projects
+        else if (Files.exists(root.resolve("package.json"))) {
+
             projectType = "JavaScript/TypeScript";
             buildTool = "npm";
+
             buildFiles.add("package.json");
-        } else if (Files.exists(root.resolve("requirements.txt"))
+        }
+
+        // Detect Python projects
+        else if (Files.exists(root.resolve("requirements.txt"))
                 || Files.exists(root.resolve("pyproject.toml"))) {
+
             projectType = "Python";
             buildTool = "pip/pyproject";
 
             if (Files.exists(root.resolve("requirements.txt"))) {
                 buildFiles.add("requirements.txt");
             }
+
             if (Files.exists(root.resolve("pyproject.toml"))) {
                 buildFiles.add("pyproject.toml");
             }
         }
 
+        // Detect source directories
         detectDirectory(root, "src/main", sourceDirectories);
         detectDirectory(root, "src/test", testDirectories);
 
         if (!sourceDirectories.contains("src/main")) {
             detectDirectory(root, "src", sourceDirectories);
         }
+
+        // Detect test directories
         detectDirectory(root, "tests", testDirectories);
         detectDirectory(root, "test", testDirectories);
 
@@ -76,9 +115,15 @@ public class RepositoryService {
         );
     }
 
-    private void detectDirectory(Path root, String directory, List<String> results) {
+    private void detectDirectory(
+            Path root,
+            String directory,
+            List<String> results
+    ) {
+
         if (Files.isDirectory(root.resolve(directory))
                 && !results.contains(directory)) {
+
             results.add(directory);
         }
     }

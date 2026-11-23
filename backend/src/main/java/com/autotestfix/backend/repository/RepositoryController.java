@@ -16,22 +16,35 @@ public class RepositoryController {
     }
 
     @PostMapping("/analyze")
-    public ResponseEntity<?> analyzeRepository(@RequestBody Map<String, String> request) {
+    public ResponseEntity<?> analyzeRepository(
+            @RequestBody Map<String, String> request
+    ) {
 
         String path = request.get("repositoryPath");
 
         if (path == null || path.isBlank()) {
+
             return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Repository path is required."));
+                    .body(Map.of(
+                            "error",
+                            "Repository path is required."
+                    ));
         }
 
         try {
-            return ResponseEntity.ok(
-                    repositoryService.analyzeRepository(path)
-            );
+
+            RepositoryAnalysis analysis =
+                    repositoryService.analyzeRepository(path);
+
+            return ResponseEntity.ok(analysis);
+
         } catch (IllegalArgumentException exception) {
+
             return ResponseEntity.badRequest()
-                    .body(Map.of("error", exception.getMessage()));
+                    .body(Map.of(
+                            "error",
+                            exception.getMessage()
+                    ));
         }
     }
 }
