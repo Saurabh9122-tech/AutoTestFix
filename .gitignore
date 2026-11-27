@@ -31,3 +31,7 @@ tmp/
 temp/
 
 sample-repos/**/target/
+
+ai-service/.venv/
+__pycache__/
+.pytest_cache/
